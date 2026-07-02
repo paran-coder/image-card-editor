@@ -7,6 +7,8 @@ import {
 import { useToolcraft } from "@/toolcraft/runtime/react";
 import type { ToolcraftPanelActionHandler } from "@/toolcraft/runtime/react";
 import type { ToolcraftMediaAsset, ToolcraftState } from "@/toolcraft/runtime/state/types";
+import { getFontPickerFontById } from "@/toolcraft/ui/components/controls/font-picker";
+import { queueFontPickerPreviewLoad } from "@/toolcraft/ui/components/controls/font-picker/font-preview-loader";
 
 type HexColorValue = {
   hex?: string;
@@ -249,9 +251,27 @@ function getTextTransform(style: Required<FontStyleValue>): React.CSSProperties[
 }
 
 function getFontFamily(style: Required<FontStyleValue>): string {
-  return style.fontId === "inter"
-    ? "'Inter Variable', Inter, ui-sans-serif, system-ui, sans-serif"
-    : "ui-sans-serif, system-ui, sans-serif";
+  const font = getFontPickerFontById(style.fontId);
+  const family = font?.family ?? "Inter";
+  const genericFamily = font?.category === "serif"
+    ? "ui-serif, Georgia, serif"
+    : font?.category === "monospace"
+      ? "ui-monospace, SFMono-Regular, Consolas, monospace"
+      : "ui-sans-serif, system-ui, sans-serif";
+
+  return `"${family}", ${genericFamily}`;
+}
+
+function getCanvasFontFamily(style: Required<FontStyleValue>): string {
+  const font = getFontPickerFontById(style.fontId);
+  const family = font?.family ?? "Inter";
+  const genericFamily = font?.category === "serif"
+    ? "Georgia, serif"
+    : font?.category === "monospace"
+      ? "Consolas, monospace"
+      : "Arial, sans-serif";
+
+  return `"${family}", ${genericFamily}`;
 }
 
 function getMediaTransform(model: CardRenderModel): string {
@@ -350,6 +370,11 @@ export function ImageCardRenderer(): React.JSX.Element {
   const model = getRenderModel(state);
   const previewCardSize = getPreviewCardSize(state, model.ratio);
   const shadowHaloStyle = getShadowHaloStyle(model.shadow, model.radius);
+
+  React.useEffect(() => {
+    queueFontPickerPreviewLoad(model.titleStyle.fontId, { priority: "high" });
+    queueFontPickerPreviewLoad(model.captionStyle.fontId, { priority: "high" });
+  }, [model.captionStyle.fontId, model.titleStyle.fontId]);
 
   return (
     <div
@@ -532,7 +557,7 @@ function setCanvasTextStyle(
   scale: number,
 ): void {
   context.fillStyle = style.color;
-  context.font = `${style.fontWeight} ${style.fontSize * scale}px Inter, Arial, sans-serif`;
+  context.font = `${style.fontWeight} ${style.fontSize * scale}px ${getCanvasFontFamily(style)}`;
   context.globalAlpha = style.opacity / 100;
   context.textBaseline = "top";
 }

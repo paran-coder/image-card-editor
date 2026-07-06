@@ -38,7 +38,6 @@ type CardRenderModel = {
   imageScale: number;
   includeBackground: boolean;
   radius: number;
-  ratio: string;
   shadow: number;
   source?: ToolcraftMediaAsset;
   titleStyle: Required<FontStyleValue>;
@@ -122,43 +121,21 @@ function readFontStyle(
   };
 }
 
-function getCardAspectRatio(ratio: string): string {
-  const { height, width } = parseCardRatio(ratio);
-
-  return `${width} / ${height}`;
+function getCardAspectRatio(state: ToolcraftState): string {
+  return `${state.canvas.size.width} / ${state.canvas.size.height}`;
 }
 
-function getCardSizeForCanvas(state: ToolcraftState, ratio: string): { height: number; width: number } {
-  const canvasWidth = state.canvas.size.width;
-  const canvasHeight = state.canvas.size.height;
-  const { height, width } = parseCardRatio(ratio);
-  const ratioNumber = width / height;
-  const widthFromHeight = canvasHeight * ratioNumber;
-
-  if (widthFromHeight <= canvasWidth) {
-    return { height: canvasHeight, width: widthFromHeight };
-  }
-
-  return { height: canvasWidth / ratioNumber, width: canvasWidth };
-}
-
-function parseCardRatio(ratio: string): { height: number; width: number } {
-  const match = ratio.match(/^(\d+):(\d+)$/);
-  const width = Number(match?.[1] ?? 1);
-  const height = Number(match?.[2] ?? 1);
-
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-    return { height: 1, width: 1 };
-  }
-
-  return { height, width };
+function getCardSizeForCanvas(state: ToolcraftState): { height: number; width: number } {
+  return {
+    height: state.canvas.size.height,
+    width: state.canvas.size.width,
+  };
 }
 
 function getPreviewCardSize(
   state: ToolcraftState,
-  ratio: string,
 ): { height: string; width: string } {
-  const cardSize = getCardSizeForCanvas(state, ratio);
+  const cardSize = getCardSizeForCanvas(state);
   const widthPercent = (cardSize.width / state.canvas.size.width) * 100;
   const heightPercent = (cardSize.height / state.canvas.size.height) * 100;
   const maxPercent = 82;
@@ -198,7 +175,6 @@ function getRenderModel(state: ToolcraftState): CardRenderModel {
     imageScale: readNumber(state.values["image.scale"], 1),
     includeBackground: shouldIncludeToolcraftPreviewBackground({ state }),
     radius: readNumber(state.values["card.radius"], 36),
-    ratio: readString(state.values["card.ratio"], "1:1"),
     shadow: readNumber(state.values["card.shadow"], 24),
     source: getFirstSourceImage(state),
     titleStyle: readFontStyle(state.values["title.style"], {
@@ -375,7 +351,7 @@ function getShadowHaloStyle(
 export function ImageCardRenderer(): React.JSX.Element {
   const { state } = useToolcraft();
   const model = getRenderModel(state);
-  const previewCardSize = getPreviewCardSize(state, model.ratio);
+  const previewCardSize = getPreviewCardSize(state);
   const shadowHaloStyle = getShadowHaloStyle(model.shadow, model.radius);
 
   React.useEffect(() => {
@@ -407,9 +383,9 @@ export function ImageCardRenderer(): React.JSX.Element {
           <div aria-hidden="true" data-product-shadow-halo="true" style={shadowHaloStyle} />
         ) : null}
         <article
-          data-product-card-ratio={model.ratio}
+          data-product-card-size={`${state.canvas.size.width}x${state.canvas.size.height}`}
           style={{
-            aspectRatio: getCardAspectRatio(model.ratio),
+            aspectRatio: getCardAspectRatio(state),
             background: model.includeBackground ? model.background : "transparent",
             borderRadius: `${model.radius}px`,
             boxShadow: getPreviewBoxShadow(model.shadow),
@@ -575,7 +551,7 @@ async function exportImageCardPng(
 ): Promise<void> {
   const model = getRenderModel(state);
   const image = model.source ? await loadImage(model.source.dataUrl) : null;
-  const ratioSize = getCardSizeForCanvas(state, model.ratio);
+  const ratioSize = getCardSizeForCanvas(state);
   const x = (state.canvas.size.width - ratioSize.width) / 2;
   const y = (state.canvas.size.height - ratioSize.height) / 2;
 

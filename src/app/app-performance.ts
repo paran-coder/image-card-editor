@@ -27,7 +27,9 @@ export const appPerformance: ToolcraftPerformanceConfig = defineToolcraftPerform
         invalidates: ["preview-composite"],
         mustNotInvalidate: ["media-decode"],
         targets: [
-          "card.ratio",
+          "canvas.aspectRatio",
+          "canvas.size.width",
+          "canvas.size.height",
           "title.text",
           "title.style",
           "caption.text",
@@ -59,7 +61,8 @@ export const appPerformance: ToolcraftPerformanceConfig = defineToolcraftPerform
         id: "preview-composite",
         inputs: [
           "source.image",
-          "card.ratio",
+          "canvas.size.width",
+          "canvas.size.height",
           "card.radius",
           "card.shadow",
           "image.scale",
@@ -73,7 +76,8 @@ export const appPerformance: ToolcraftPerformanceConfig = defineToolcraftPerform
         ],
         invalidatedBy: [
           "source.image",
-          "card.ratio",
+          "canvas.size.width",
+          "canvas.size.height",
           "card.radius",
           "card.shadow",
           "image.scale",
@@ -94,7 +98,8 @@ export const appPerformance: ToolcraftPerformanceConfig = defineToolcraftPerform
         id: "png-export",
         inputs: [
           "source.image",
-          "card.ratio",
+          "canvas.size.width",
+          "canvas.size.height",
           "card.radius",
           "image.scale",
           "image.position",
@@ -108,7 +113,8 @@ export const appPerformance: ToolcraftPerformanceConfig = defineToolcraftPerform
         ],
         invalidatedBy: [
           "source.image",
-          "card.ratio",
+          "canvas.size.width",
+          "canvas.size.height",
           "card.radius",
           "image.scale",
           "image.position",

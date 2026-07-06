@@ -27,7 +27,7 @@ describe("appSchema", () => {
   it("groups product controls by card workflow", () => {
     expect(productSections.map((section) => section.title)).toEqual([
       "Source Image",
-      "Card Format",
+      "Card Style",
       "Image Placement",
       "Image Position",
       "Title Text",
@@ -48,7 +48,6 @@ describe("appSchema", () => {
     expect(targets).toEqual(
       expect.arrayContaining([
         "source.image",
-        "card.ratio",
         "appearance.background",
         "image.scale",
         "image.position",

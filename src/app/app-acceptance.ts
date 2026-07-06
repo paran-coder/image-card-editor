@@ -384,22 +384,6 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   },
   {
     automated: true,
-    automatedTestName: "appSchema exposes every card ratio option",
-    browser: true,
-    browserTestName: "image card browser: ratio options resize product card",
-    componentType: "segmented",
-    evidence: "product-output",
-    expectedObservable:
-      "Selecting 9:16, 3:4, 4:5, 1:1, 5:4, 4:3, and 16:9 changes the data-product-card-ratio value and visible card frame proportions.",
-    fixture: "Default text and background with or without uploaded image.",
-    id: "card.ratio",
-    kind: "control",
-    optionCoverage: "each-visible-item",
-    target: "card.ratio",
-    userAction: "Click each visible Ratio segmented option.",
-  },
-  {
-    automated: true,
     automatedTestName: "appSchema maps radius to card style",
     browser: true,
     browserTestName: "image card browser: radius slider changes clipped card corners live",
@@ -628,9 +612,9 @@ export const starterControlSectionInventory: readonly ToolcraftControlSectionInv
   {
     entity: "Card frame",
     groupingReason:
-      "Ratio, radius, and depth define the visible card container before image/text tuning.",
-    targets: ["card.ratio", "card.radius", "card.shadow"],
-    title: "Card Format",
+      "Radius and depth define the visible card container style after the runtime canvas ratio sets the output format.",
+    targets: ["card.radius", "card.shadow"],
+    title: "Card Style",
     workflowStage: "structure",
   },
   {

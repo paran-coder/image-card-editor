@@ -1,13 +1,13 @@
 import type { ToolcraftCanvasSize } from "./types";
 
 export type ToolcraftCanvasAspectRatioPresetValue =
-  | "1:1"
-  | "3:2"
-  | "16:9"
-  | "3:4"
   | "9:16"
-  | "2:3"
-  | "4:3";
+  | "3:4"
+  | "4:5"
+  | "1:1"
+  | "5:4"
+  | "4:3"
+  | "16:9";
 
 export type ToolcraftCanvasAspectRatioPreset = {
   height: number;
@@ -18,13 +18,13 @@ export type ToolcraftCanvasAspectRatioPreset = {
 };
 
 export const toolcraftCanvasAspectRatioPresets = [
-  { height: 1080, ratioHeight: 1, ratioWidth: 1, value: "1:1", width: 1080 },
-  { height: 1080, ratioHeight: 2, ratioWidth: 3, value: "3:2", width: 1620 },
-  { height: 1080, ratioHeight: 9, ratioWidth: 16, value: "16:9", width: 1920 },
-  { height: 1440, ratioHeight: 4, ratioWidth: 3, value: "3:4", width: 1080 },
   { height: 1920, ratioHeight: 16, ratioWidth: 9, value: "9:16", width: 1080 },
-  { height: 1620, ratioHeight: 3, ratioWidth: 2, value: "2:3", width: 1080 },
+  { height: 1440, ratioHeight: 4, ratioWidth: 3, value: "3:4", width: 1080 },
+  { height: 1350, ratioHeight: 5, ratioWidth: 4, value: "4:5", width: 1080 },
+  { height: 1080, ratioHeight: 1, ratioWidth: 1, value: "1:1", width: 1080 },
+  { height: 1080, ratioHeight: 4, ratioWidth: 5, value: "5:4", width: 1350 },
   { height: 1080, ratioHeight: 3, ratioWidth: 4, value: "4:3", width: 1440 },
+  { height: 1080, ratioHeight: 9, ratioWidth: 16, value: "16:9", width: 1920 },
 ] as const satisfies readonly ToolcraftCanvasAspectRatioPreset[];
 
 export const toolcraftCanvasAspectRatioPresetValues = new Set<string>(

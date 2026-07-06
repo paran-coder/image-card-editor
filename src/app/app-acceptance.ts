@@ -422,7 +422,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
     evidence: "rendered-pixels",
     expectedObservable:
       "Dragging Depth changes the card lift halo, edge treatment, and box-shadow during the drag while the canvas viewport remains stable.",
-    fixture: "Set Depth to 0px and 60px on the default card.",
+    fixture: "Set Depth to 0px and 100px on the default card.",
     id: "card.shadow",
     kind: "control",
     target: "card.shadow",

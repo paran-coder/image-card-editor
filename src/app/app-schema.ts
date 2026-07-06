@@ -72,7 +72,7 @@ export const appSchema = defineToolcraft({
             shadowStrength: {
               defaultValue: 24,
               label: "Depth",
-              max: 60,
+              max: 100,
               min: 0,
               orderRole: "detail",
               performanceReason:

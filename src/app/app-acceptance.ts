@@ -359,9 +359,9 @@ export const appProductReadiness: ToolcraftProductReadiness = {
   mode: "product",
   productName: "Image Card Editor",
   productSummary:
-    "A Toolcraft editor for uploading an image and composing a clean SNS-style card with adjustable format, image placement, text, background, and PNG export.",
+    "A Toolcraft editor for uploading an image and composing a clean SNS-style card with adjustable format, custom embedded font, image placement, text, background, and PNG export.",
   requestedBehavior:
-    "Users upload an image, tune card ratio, background, image scale and position, corner radius, depth, title text, caption text, typography color and size, then export the final card as PNG.",
+    "Users upload an image, optionally upload a custom font that persists in the same browser, tune card ratio, background, image scale and position, corner radius, depth, title text, caption text, typography color and size, then export the final card as PNG.",
 };
 
 export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
@@ -381,6 +381,23 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
     target: "source.image",
     userAction:
       "Upload/import an image from the fileDrop, rotate 90 degrees, flip horizontally, flip vertically, clear/remove the image, then use Reset controls.",
+  },
+  {
+    automated: true,
+    automatedTestName: "appSchema exposes custom font upload persistence",
+    browser: true,
+    browserTestName: "image card browser: uploaded font persists after reload",
+    componentType: "fileDrop",
+    evidence: "persistence-state",
+    expectedObservable:
+      "Uploading a font file creates a runtime file media asset at font.embed, title and caption render with the embedded font, PNG export waits for the font, and the uploaded font remains after a real browser reload through runtime media persistence.",
+    fixture: "Use a small WOFF2 font fixture whose letter shapes visibly differ from Inter.",
+    id: "font.embed",
+    kind: "control",
+    persistenceCoverage: "reload",
+    target: "font.embed",
+    userAction:
+      "Upload/import a font from the Custom Font fileDrop, observe title and caption using it, reload the browser, and observe the font still applied.",
   },
   {
     automated: true,
@@ -607,6 +624,14 @@ export const starterControlSectionInventory: readonly ToolcraftControlSectionInv
       "The uploaded image is the single source material that the card preview and export consume.",
     targets: ["source.image"],
     title: "Source Image",
+    workflowStage: "input",
+  },
+  {
+    entity: "Embedded font",
+    groupingReason:
+      "The uploaded font file is optional source material that changes both title and caption typography and persists with runtime media.",
+    targets: ["font.embed"],
+    title: "Custom Font",
     workflowStage: "input",
   },
   {

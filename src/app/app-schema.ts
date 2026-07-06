@@ -34,6 +34,23 @@ export const appSchema = defineToolcraft({
           },
         },
         {
+          title: "Custom Font",
+          controls: {
+            embeddedFont: {
+              accept: ".ttf,.otf,.woff,.woff2,font/*,application/font-woff,application/font-woff2",
+              assetKind: "file",
+              defaultValue: [],
+              label: "Font File",
+              orderRole: "input",
+              performanceReason:
+                "Uploading a custom font changes text rendering and is persisted by runtime media storage.",
+              performanceRole: "workload",
+              target: "font.embed",
+              type: "fileDrop",
+            },
+          },
+        },
+        {
           title: "Card Style",
           controls: {
             cornerRadius: {

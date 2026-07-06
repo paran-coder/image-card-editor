@@ -48,6 +48,49 @@ const fontSizeFallbacks = {
   caption: 34,
   title: 72,
 };
+const embeddedFontSourceTarget = "font.embed";
+const embeddedFontFamilyPrefix = "ImageCardEmbeddedFont";
+const embeddedFontLoadCache = new Map<string, Promise<string>>();
+
+function getEmbeddedFontAsset(state: ToolcraftState): ToolcraftMediaAsset | undefined {
+  return state.mediaAssets.find(
+    (asset) => asset.sourceTarget === embeddedFontSourceTarget && asset.assetKind === "file",
+  );
+}
+
+function getEmbeddedFontFamily(asset: ToolcraftMediaAsset): string {
+  const suffix = asset.id.replace(/[^a-zA-Z0-9_-]/g, "-");
+
+  return `${embeddedFontFamilyPrefix}-${suffix}`;
+}
+
+async function loadEmbeddedFontFace(
+  asset: ToolcraftMediaAsset | undefined,
+): Promise<string | undefined> {
+  if (!asset || typeof FontFace === "undefined" || typeof document === "undefined") {
+    return undefined;
+  }
+
+  const family = getEmbeddedFontFamily(asset);
+  const cacheKey = `${asset.id}:${asset.dataUrl.length}`;
+  const existing = embeddedFontLoadCache.get(cacheKey);
+
+  if (existing) {
+    return existing;
+  }
+
+  const loadPromise = new FontFace(family, `url("${asset.dataUrl}")`)
+    .load()
+    .then((fontFace) => {
+      document.fonts.add(fontFace);
+
+      return family;
+    });
+
+  embeddedFontLoadCache.set(cacheKey, loadPromise);
+
+  return loadPromise;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -233,7 +276,14 @@ function getTextTransform(style: Required<FontStyleValue>): React.CSSProperties[
   return "none";
 }
 
-function getFontFamily(style: Required<FontStyleValue>): string {
+function getFontFamily(
+  style: Required<FontStyleValue>,
+  embeddedFontFamily?: string,
+): string {
+  if (embeddedFontFamily) {
+    return `"${embeddedFontFamily}", ui-sans-serif, system-ui, sans-serif`;
+  }
+
   const font = getFontPickerFontById(style.fontId);
   const family = font?.family ?? "Inter";
   const genericFamily = font?.category === "serif"
@@ -245,7 +295,14 @@ function getFontFamily(style: Required<FontStyleValue>): string {
   return `"${family}", ${genericFamily}`;
 }
 
-function getCanvasFontFamily(style: Required<FontStyleValue>): string {
+function getCanvasFontFamily(
+  style: Required<FontStyleValue>,
+  embeddedFontFamily?: string,
+): string {
+  if (embeddedFontFamily) {
+    return `"${embeddedFontFamily}", Arial, sans-serif`;
+  }
+
   const font = getFontPickerFontById(style.fontId);
   const family = font?.family ?? "Inter";
   const genericFamily = font?.category === "serif"
@@ -295,10 +352,14 @@ function getImageObjectPosition(model: CardRenderModel): string {
   return `${Math.max(0, Math.min(100, x))}% ${Math.max(0, Math.min(100, y))}%`;
 }
 
-function getTextStyle(style: Required<FontStyleValue>, scale = 1): React.CSSProperties {
+function getTextStyle(
+  style: Required<FontStyleValue>,
+  scale = 1,
+  embeddedFontFamily?: string,
+): React.CSSProperties {
   return {
     color: style.color,
-    fontFamily: getFontFamily(style),
+    fontFamily: getFontFamily(style, embeddedFontFamily),
     fontSize: `${style.fontSize * scale}px`,
     fontWeight: style.fontWeight,
     letterSpacing: getLetterSpacing(style, scale),
@@ -352,12 +413,29 @@ export function ImageCardRenderer(): React.JSX.Element {
   const { state } = useToolcraft();
   const model = getRenderModel(state);
   const previewCardSize = getPreviewCardSize(state);
+  const embeddedFontAsset = getEmbeddedFontAsset(state);
+  const embeddedFontFamily = embeddedFontAsset ? getEmbeddedFontFamily(embeddedFontAsset) : undefined;
+  const [, setLoadedEmbeddedFontKey] = React.useState<string | null>(null);
   const shadowHaloStyle = getShadowHaloStyle(model.shadow, model.radius);
 
   React.useEffect(() => {
     queueFontPickerPreviewLoad(model.titleStyle.fontId, { priority: "high" });
     queueFontPickerPreviewLoad(model.captionStyle.fontId, { priority: "high" });
   }, [model.captionStyle.fontId, model.titleStyle.fontId]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    void loadEmbeddedFontFace(embeddedFontAsset).then((family) => {
+      if (!cancelled) {
+        setLoadedEmbeddedFontKey(family ?? null);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [embeddedFontAsset]);
 
   return (
     <div
@@ -441,7 +519,7 @@ export function ImageCardRenderer(): React.JSX.Element {
           <div
             data-product-title="true"
             style={{
-              ...getTextStyle(model.titleStyle),
+              ...getTextStyle(model.titleStyle, 1, embeddedFontFamily),
               left: "7%",
               maxWidth: "86%",
               overflowWrap: "break-word",
@@ -455,7 +533,7 @@ export function ImageCardRenderer(): React.JSX.Element {
           <div
             data-product-caption="true"
             style={{
-              ...getTextStyle(model.captionStyle),
+              ...getTextStyle(model.captionStyle, 1, embeddedFontFamily),
               bottom: "7%",
               left: "7%",
               maxWidth: "78%",
@@ -538,9 +616,10 @@ function setCanvasTextStyle(
   context: CanvasRenderingContext2D,
   style: Required<FontStyleValue>,
   scale: number,
+  embeddedFontFamily?: string,
 ): void {
   context.fillStyle = style.color;
-  context.font = `${style.fontWeight} ${style.fontSize * scale}px ${getCanvasFontFamily(style)}`;
+  context.font = `${style.fontWeight} ${style.fontSize * scale}px ${getCanvasFontFamily(style, embeddedFontFamily)}`;
   context.globalAlpha = style.opacity / 100;
   context.textBaseline = "top";
 }
@@ -551,6 +630,7 @@ async function exportImageCardPng(
 ): Promise<void> {
   const model = getRenderModel(state);
   const image = model.source ? await loadImage(model.source.dataUrl) : null;
+  const embeddedFontFamily = await loadEmbeddedFontFace(getEmbeddedFontAsset(state));
   const ratioSize = getCardSizeForCanvas(state);
   const x = (state.canvas.size.width - ratioSize.width) / 2;
   const y = (state.canvas.size.height - ratioSize.height) / 2;
@@ -608,7 +688,7 @@ async function exportImageCardPng(
       context.fillStyle = gradient;
       context.fillRect(x, y, ratioSize.width, ratioSize.height);
 
-      setCanvasTextStyle(context, model.titleStyle, ratioSize.width / 1080);
+      setCanvasTextStyle(context, model.titleStyle, ratioSize.width / 1080, embeddedFontFamily);
       drawWrappedText({
         context,
         maxWidth: ratioSize.width * 0.86,
@@ -617,7 +697,7 @@ async function exportImageCardPng(
         y: y + ratioSize.height * 0.07,
       });
 
-      setCanvasTextStyle(context, model.captionStyle, ratioSize.width / 1080);
+      setCanvasTextStyle(context, model.captionStyle, ratioSize.width / 1080, embeddedFontFamily);
       drawWrappedText({
         context,
         maxWidth: ratioSize.width * 0.78,

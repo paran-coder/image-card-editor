@@ -14,7 +14,7 @@ export const appPerformance: ToolcraftPerformanceConfig = defineToolcraftPerform
       {
         interaction: "media-import",
         invalidates: ["media-decode", "preview-composite", "png-export"],
-        targets: ["source.image"],
+        targets: ["source.image", "font.embed"],
       },
       {
         interaction: "control-drag",
@@ -51,7 +51,7 @@ export const appPerformance: ToolcraftPerformanceConfig = defineToolcraftPerform
         cacheKey: ["source.image"],
         id: "media-decode",
         inputs: ["source.image"],
-        invalidatedBy: ["source.image"],
+        invalidatedBy: ["source.image", "font.embed"],
         kind: "decode",
         output: "source",
         quality: "full",
@@ -61,6 +61,7 @@ export const appPerformance: ToolcraftPerformanceConfig = defineToolcraftPerform
         id: "preview-composite",
         inputs: [
           "source.image",
+          "font.embed",
           "canvas.size.width",
           "canvas.size.height",
           "card.radius",
@@ -76,6 +77,7 @@ export const appPerformance: ToolcraftPerformanceConfig = defineToolcraftPerform
         ],
         invalidatedBy: [
           "source.image",
+          "font.embed",
           "canvas.size.width",
           "canvas.size.height",
           "card.radius",
@@ -98,6 +100,7 @@ export const appPerformance: ToolcraftPerformanceConfig = defineToolcraftPerform
         id: "png-export",
         inputs: [
           "source.image",
+          "font.embed",
           "canvas.size.width",
           "canvas.size.height",
           "card.radius",
@@ -113,6 +116,7 @@ export const appPerformance: ToolcraftPerformanceConfig = defineToolcraftPerform
         ],
         invalidatedBy: [
           "source.image",
+          "font.embed",
           "canvas.size.width",
           "canvas.size.height",
           "card.radius",

@@ -150,6 +150,45 @@ export const appSchema = defineToolcraft({
           },
         },
         {
+          title: "Title Stroke",
+          controls: {
+            titleStrokeEnabled: {
+              defaultValue: false,
+              label: "Enable",
+              orderRole: "mode",
+              performanceReason:
+                "Title stroke visibility toggles text outline styling without changing layout.",
+              performanceRole: "responsiveness",
+              target: "title.stroke.enabled",
+              type: "switch",
+            },
+            titleStrokeColor: {
+              defaultValue: { hex: "#000000" },
+              label: "Color",
+              orderRole: "color",
+              performanceReason:
+                "Title stroke color updates text outline pixels in preview and export.",
+              performanceRole: "responsiveness",
+              target: "title.stroke.color",
+              type: "color",
+            },
+            titleStrokeWidth: {
+              defaultValue: 2,
+              label: "Width",
+              max: 16,
+              min: 0,
+              orderRole: "detail",
+              performanceReason:
+                "Title stroke width changes text outline thickness in preview and export.",
+              performanceRole: "responsiveness",
+              step: 1,
+              target: "title.stroke.width",
+              type: "slider",
+              unit: "px",
+            },
+          },
+        },
+        {
           title: "Caption Text",
           controls: {
             captionText: {
@@ -181,6 +220,45 @@ export const appSchema = defineToolcraft({
               performanceRole: "responsiveness",
               target: "caption.style",
               type: "fontPicker",
+            },
+          },
+        },
+        {
+          title: "Caption Stroke",
+          controls: {
+            captionStrokeEnabled: {
+              defaultValue: false,
+              label: "Enable",
+              orderRole: "mode",
+              performanceReason:
+                "Caption stroke visibility toggles text outline styling without changing layout.",
+              performanceRole: "responsiveness",
+              target: "caption.stroke.enabled",
+              type: "switch",
+            },
+            captionStrokeColor: {
+              defaultValue: { hex: "#000000" },
+              label: "Color",
+              orderRole: "color",
+              performanceReason:
+                "Caption stroke color updates text outline pixels in preview and export.",
+              performanceRole: "responsiveness",
+              target: "caption.stroke.color",
+              type: "color",
+            },
+            captionStrokeWidth: {
+              defaultValue: 1,
+              label: "Width",
+              max: 12,
+              min: 0,
+              orderRole: "detail",
+              performanceReason:
+                "Caption stroke width changes text outline thickness in preview and export.",
+              performanceRole: "responsiveness",
+              step: 1,
+              target: "caption.stroke.width",
+              type: "slider",
+              unit: "px",
             },
           },
         },

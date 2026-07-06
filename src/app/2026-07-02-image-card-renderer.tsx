@@ -30,9 +30,16 @@ type VectorValue = {
   y?: number;
 };
 
+type TextStrokeValue = {
+  color: string;
+  enabled: boolean;
+  width: number;
+};
+
 type CardRenderModel = {
   background: string;
   captionStyle: Required<FontStyleValue>;
+  captionStroke: TextStrokeValue;
   captionText: string;
   imagePosition: Required<VectorValue>;
   imageScale: number;
@@ -41,6 +48,7 @@ type CardRenderModel = {
   shadow: number;
   source?: ToolcraftMediaAsset;
   titleStyle: Required<FontStyleValue>;
+  titleStroke: TextStrokeValue;
   titleText: string;
 };
 
@@ -116,12 +124,28 @@ function readNumber(value: unknown, fallback: number): number {
   return fallback;
 }
 
+function readBoolean(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
 function readHex(value: unknown, fallback: string): string {
   if (isRecord(value) && typeof value.hex === "string") {
     return value.hex;
   }
 
   return fallback;
+}
+
+function readTextStroke(
+  values: ToolcraftState["values"],
+  prefix: "caption" | "title",
+  fallbackWidth: number,
+): TextStrokeValue {
+  return {
+    color: readHex(values[`${prefix}.stroke.color`], "#000000"),
+    enabled: readBoolean(values[`${prefix}.stroke.enabled`], false),
+    width: readNumber(values[`${prefix}.stroke.width`], fallbackWidth),
+  };
 }
 
 function readVector(value: unknown): Required<VectorValue> {
@@ -210,6 +234,7 @@ function getRenderModel(state: ToolcraftState): CardRenderModel {
       opacity: 92,
       textCase: "original",
     }),
+    captionStroke: readTextStroke(state.values, "caption", 1),
     captionText: readString(
       state.values["caption.text"],
       "Fresh finds, handmade goods, and coffee from 10 AM.",
@@ -230,6 +255,7 @@ function getRenderModel(state: ToolcraftState): CardRenderModel {
       opacity: 100,
       textCase: "original",
     }),
+    titleStroke: readTextStroke(state.values, "title", 2),
     titleText: readString(state.values["title.text"], "Weekend Market"),
   };
 }
@@ -356,7 +382,11 @@ function getTextStyle(
   style: Required<FontStyleValue>,
   scale = 1,
   embeddedFontFamily?: string,
+  stroke?: TextStrokeValue,
 ): React.CSSProperties {
+  const strokeWidth = stroke?.enabled ? Math.max(0, stroke.width * scale) : 0;
+  const strokeColor = stroke?.color ?? "transparent";
+
   return {
     color: style.color,
     fontFamily: getFontFamily(style, embeddedFontFamily),
@@ -365,7 +395,9 @@ function getTextStyle(
     letterSpacing: getLetterSpacing(style, scale),
     lineHeight: getLineHeight(style),
     opacity: style.opacity / 100,
+    paintOrder: strokeWidth > 0 ? "stroke fill" : undefined,
     textTransform: getTextTransform(style),
+    WebkitTextStroke: strokeWidth > 0 ? `${strokeWidth}px ${strokeColor}` : undefined,
   };
 }
 
@@ -519,7 +551,7 @@ export function ImageCardRenderer(): React.JSX.Element {
           <div
             data-product-title="true"
             style={{
-              ...getTextStyle(model.titleStyle, 1, embeddedFontFamily),
+              ...getTextStyle(model.titleStyle, 1, embeddedFontFamily, model.titleStroke),
               left: "7%",
               maxWidth: "86%",
               overflowWrap: "break-word",
@@ -533,7 +565,7 @@ export function ImageCardRenderer(): React.JSX.Element {
           <div
             data-product-caption="true"
             style={{
-              ...getTextStyle(model.captionStyle, 1, embeddedFontFamily),
+              ...getTextStyle(model.captionStyle, 1, embeddedFontFamily, model.captionStroke),
               bottom: "7%",
               left: "7%",
               maxWidth: "78%",
@@ -580,12 +612,14 @@ function getImageCoverDrawRect(
 function drawWrappedText({
   context,
   maxWidth,
+  stroke,
   text,
   x,
   y,
 }: {
   context: CanvasRenderingContext2D;
   maxWidth: number;
+  stroke?: TextStrokeValue;
   text: string;
   x: number;
   y: number;
@@ -599,6 +633,9 @@ function drawWrappedText({
     const testLine = line ? `${line} ${word}` : word;
 
     if (context.measureText(testLine).width > maxWidth && line) {
+      if (stroke?.enabled && stroke.width > 0) {
+        context.strokeText(line, x, cursorY);
+      }
       context.fillText(line, x, cursorY);
       line = word;
       cursorY += lineHeight;
@@ -608,6 +645,9 @@ function drawWrappedText({
   }
 
   if (line) {
+    if (stroke?.enabled && stroke.width > 0) {
+      context.strokeText(line, x, cursorY);
+    }
     context.fillText(line, x, cursorY);
   }
 }
@@ -622,6 +662,17 @@ function setCanvasTextStyle(
   context.font = `${style.fontWeight} ${style.fontSize * scale}px ${getCanvasFontFamily(style, embeddedFontFamily)}`;
   context.globalAlpha = style.opacity / 100;
   context.textBaseline = "top";
+}
+
+function setCanvasStrokeStyle(
+  context: CanvasRenderingContext2D,
+  stroke: TextStrokeValue,
+  scale: number,
+): void {
+  context.lineJoin = "round";
+  context.lineWidth = Math.max(0, stroke.width * scale);
+  context.miterLimit = 2;
+  context.strokeStyle = stroke.color;
 }
 
 async function exportImageCardPng(
@@ -689,18 +740,22 @@ async function exportImageCardPng(
       context.fillRect(x, y, ratioSize.width, ratioSize.height);
 
       setCanvasTextStyle(context, model.titleStyle, ratioSize.width / 1080, embeddedFontFamily);
+      setCanvasStrokeStyle(context, model.titleStroke, ratioSize.width / 1080);
       drawWrappedText({
         context,
         maxWidth: ratioSize.width * 0.86,
+        stroke: model.titleStroke,
         text: model.titleText,
         x: x + ratioSize.width * 0.07,
         y: y + ratioSize.height * 0.07,
       });
 
       setCanvasTextStyle(context, model.captionStyle, ratioSize.width / 1080, embeddedFontFamily);
+      setCanvasStrokeStyle(context, model.captionStroke, ratioSize.width / 1080);
       drawWrappedText({
         context,
         maxWidth: ratioSize.width * 0.78,
+        stroke: model.captionStroke,
         text: model.captionText,
         x: x + ratioSize.width * 0.07,
         y: y + ratioSize.height * 0.8,

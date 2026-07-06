@@ -123,21 +123,16 @@ function readFontStyle(
 }
 
 function getCardAspectRatio(ratio: string): string {
-  if (ratio === "4:5") {
-    return "4 / 5";
-  }
+  const { height, width } = parseCardRatio(ratio);
 
-  if (ratio === "16:9") {
-    return "16 / 9";
-  }
-
-  return "1 / 1";
+  return `${width} / ${height}`;
 }
 
 function getCardSizeForCanvas(state: ToolcraftState, ratio: string): { height: number; width: number } {
   const canvasWidth = state.canvas.size.width;
   const canvasHeight = state.canvas.size.height;
-  const ratioNumber = ratio === "4:5" ? 4 / 5 : ratio === "16:9" ? 16 / 9 : 1;
+  const { height, width } = parseCardRatio(ratio);
+  const ratioNumber = width / height;
   const widthFromHeight = canvasHeight * ratioNumber;
 
   if (widthFromHeight <= canvasWidth) {
@@ -145,6 +140,18 @@ function getCardSizeForCanvas(state: ToolcraftState, ratio: string): { height: n
   }
 
   return { height: canvasWidth / ratioNumber, width: canvasWidth };
+}
+
+function parseCardRatio(ratio: string): { height: number; width: number } {
+  const match = ratio.match(/^(\d+):(\d+)$/);
+  const width = Number(match?.[1] ?? 1);
+  const height = Number(match?.[2] ?? 1);
+
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return { height: 1, width: 1 };
+  }
+
+  return { height, width };
 }
 
 function getPreviewCardSize(

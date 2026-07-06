@@ -390,7 +390,7 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
     componentType: "segmented",
     evidence: "product-output",
     expectedObservable:
-      "Selecting 1:1, 4:5, and 16:9 changes the data-product-card-ratio value and visible card frame proportions.",
+      "Selecting 9:16, 3:4, 4:5, 1:1, 5:4, 4:3, and 16:9 changes the data-product-card-ratio value and visible card frame proportions.",
     fixture: "Default text and background with or without uploaded image.",
     id: "card.ratio",
     kind: "control",
